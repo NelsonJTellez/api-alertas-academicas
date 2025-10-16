@@ -1,181 +1,258 @@
 package co.edu.uptc.alertas_tempranas_ecaes.application.service;
 
+
 import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.*;
 import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.repository.*;
 import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto.*;
+import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.mapper.ContextoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @Service
 @RequiredArgsConstructor
 public class ConsultaContextoService {
+
 
     private final CreadJpaRepository creadRepository;
     private final ProgramaJpaRepository programaRepository;
     private final SemestreJpaRepository semestreRepository;
     private final AsignaturaJpaRepository asignaturaRepository;
     private final ActividadJpaRepository actividadRepository;
+    private final ContextoMapper contextoMapper;
 
-    // ============ CREADS (Nivel 1) ============
+
     public List<CreadDTO> listarCreads() {
         return creadRepository.findAll().stream()
-                .map(this::mapearCread)
+                .map(contextoMapper::mapearCread)
                 .collect(Collectors.toList());
     }
 
-    // Obtener un CREAD por ID
+
     public CreadDTO obtenerCreadPorId(Integer id) {
         return creadRepository.findById(id)
-                .map(this::mapearCread)
+                .map(contextoMapper::mapearCread)
                 .orElseThrow(() -> new RuntimeException("CREAD no encontrado con ID: " + id));
     }
 
 
-    // ============ PROGRAMAS (Nivel 2: incluye CREAD) ============
     public List<ProgramaDTO> listarProgramasPorCread(Integer idCread) {
-        return programaRepository.findAll().stream()
-                .filter(p -> p.getIdCread().equals(idCread))
-                .map(p -> mapearProgramaConCread(p, idCread))
+        CreadDTO creadDTO = creadRepository.findById(idCread)
+                .map(contextoMapper::mapearCread)
+                .orElse(null);
+        return programaRepository.findProgramasByCreadId(idCread).stream()
+                .map(p -> contextoMapper.mapearProgramaConCread(p, creadDTO))
                 .collect(Collectors.toList());
     }
 
-    public List<ProgramaDTO> listarProgramas() {
-        return programaRepository.findAll().stream()
-                .map(p -> mapearProgramaConCread(p, p.getIdCread()))
-                .collect(Collectors.toList());
-    }
 
     public ProgramaDTO obtenerProgramaPorId(Integer id) {
         ProgramaEntity programa = programaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + id));
-        return mapearProgramaConCread(programa, programa.getIdCread());
+        CreadEntity cread = programa.getCreads().stream().findFirst().orElse(null);
+        CreadDTO creadDTO = (cread != null) ? contextoMapper.mapearCread(cread) : null;
+        return contextoMapper.mapearProgramaConCread(programa, creadDTO);
     }
 
-    // ============ SEMESTRES (Nivel 3: incluye Programa → CREAD) ============
-    public List<SemestreDTO> listarSemestresPorPrograma(Integer idPrograma) {
+
+    public List<SemestreDTO> listarSemestresPorCreadPrograma(Integer idCread, Integer idPrograma) {
+        ProgramaEntity programa = programaRepository.findById(idPrograma)
+            .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + idPrograma));
+        boolean perteneceAlCread = programa.getCreads().stream()
+            .anyMatch(c -> c.getIdCread().equals(idCread));
+        if (!perteneceAlCread) {
+            throw new RuntimeException("El programa no pertenece al CREAD especificado");
+        }
+        CreadEntity cread = programa.getCreads().stream()
+            .filter(c -> c.getIdCread().equals(idCread)).findFirst().orElse(null);
+        CreadDTO creadDTO = (cread != null) ? contextoMapper.mapearCread(cread) : null;
+        ProgramaDTO programaDTO = contextoMapper.mapearProgramaConCread(programa, creadDTO);
+
         return semestreRepository.findByIdPrograma(idPrograma).stream()
-                .map(s -> mapearSemestreConPrograma(s, idPrograma))
-                .collect(Collectors.toList());
+            .map(s -> contextoMapper.mapearSemestreConPrograma(s, programaDTO))
+            .collect(Collectors.toList());
     }
 
-    // ============ ASIGNATURAS (Nivel 4: incluye Semestre → Programa → CREAD) ============
-    public List<AsignaturaDTO> listarAsignaturasPorSemestre(Integer idSemestre) {
+
+    public SemestreDTO obtenerSemestreJerarquico(Integer idCread, Integer idPrograma, Integer idSemestre) {
+        ProgramaEntity programa = programaRepository.findById(idPrograma)
+            .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + idPrograma));
+        boolean perteneceAlCread = programa.getCreads().stream()
+            .anyMatch(c -> c.getIdCread().equals(idCread));
+        if (!perteneceAlCread) {
+            throw new RuntimeException("El programa no pertenece al CREAD especificado");
+        }
+        SemestreEntity semestre = semestreRepository.findById(idSemestre)
+            .orElseThrow(() -> new RuntimeException("Semestre no encontrado con ID: " + idSemestre));
+        if (!semestre.getIdPrograma().equals(idPrograma)) {
+            throw new RuntimeException("El semestre no pertenece al programa especificado");
+        }
+        CreadEntity cread = programa.getCreads().stream()
+            .filter(c -> c.getIdCread().equals(idCread)).findFirst().orElse(null);
+        CreadDTO creadDTO = (cread != null) ? contextoMapper.mapearCread(cread) : null;
+        ProgramaDTO programaDTO = contextoMapper.mapearProgramaConCread(programa, creadDTO);
+        return contextoMapper.mapearSemestreConPrograma(semestre, programaDTO);
+    }
+
+
+    public List<AsignaturaDTO> listarAsignaturasPorCreadProgramaSemestre(Integer idCread, Integer idPrograma, Integer idSemestre) {
+        ProgramaEntity programa = programaRepository.findById(idPrograma)
+            .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + idPrograma));
+        boolean perteneceAlCread = programa.getCreads().stream()
+            .anyMatch(c -> c.getIdCread().equals(idCread));
+        if (!perteneceAlCread) {
+            throw new RuntimeException("El programa no pertenece al CREAD especificado");
+        }
+
+
+        SemestreEntity semestre = semestreRepository.findById(idSemestre)
+            .orElseThrow(() -> new RuntimeException("Semestre no encontrado con ID: " + idSemestre));
+        if (!semestre.getIdPrograma().equals(idPrograma)) {
+            throw new RuntimeException("El semestre no pertenece al programa especificado");
+        }
+
+
+        CreadEntity cread = programa.getCreads().stream()
+            .filter(c -> c.getIdCread().equals(idCread)).findFirst().orElse(null);
+        CreadDTO creadDTO = (cread != null) ? contextoMapper.mapearCread(cread) : null;
+        ProgramaDTO programaDTO = contextoMapper.mapearProgramaConCread(programa, creadDTO);
+        SemestreDTO semestreDTO = contextoMapper.mapearSemestreConPrograma(semestre, programaDTO);
+
+
         return asignaturaRepository.findByIdSemestre(idSemestre).stream()
-                .map(a -> mapearAsignaturaConSemestre(a, idSemestre))
-                .collect(Collectors.toList());
+            .map(a -> contextoMapper.mapearAsignaturaConSemestre(a, semestreDTO))
+            .collect(Collectors.toList());
     }
 
-    // ============ ACTIVIDADES (Nivel 5: incluye toda la jerarquía) ============
-    public List<ActividadDTO> listarActividadesPorAsignatura(Integer codAsignatura) {
-        return actividadRepository.findByCodAsignatura(codAsignatura).stream()
-                .map(a -> mapearActividadConAsignatura(a, codAsignatura))
-                .collect(Collectors.toList());
+
+    public AsignaturaDTO obtenerAsignaturaJerarquica(Integer idCread, Integer idPrograma, Integer idSemestre, Integer codAsignatura) {
+        ProgramaEntity programa = programaRepository.findById(idPrograma)
+            .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + idPrograma));
+        boolean perteneceAlCread = programa.getCreads().stream()
+            .anyMatch(c -> c.getIdCread().equals(idCread));
+        if (!perteneceAlCread) {
+            throw new RuntimeException("El programa no pertenece al CREAD especificado");
+        }
+
+
+        SemestreEntity semestre = semestreRepository.findById(idSemestre)
+            .orElseThrow(() -> new RuntimeException("Semestre no encontrado con ID: " + idSemestre));
+        if (!semestre.getIdPrograma().equals(idPrograma)) {
+            throw new RuntimeException("El semestre no pertenece al programa especificado");
+        }
+
+
+        AsignaturaEntity asignatura = asignaturaRepository.findById(codAsignatura)
+            .orElseThrow(() -> new RuntimeException("Asignatura no encontrada con ID: " + codAsignatura));
+        if (!asignatura.getIdSemestre().equals(idSemestre)) {
+            throw new RuntimeException("La asignatura no pertenece al semestre especificado");
+        }
+
+
+        CreadEntity cread = programa.getCreads().stream()
+            .filter(c -> c.getIdCread().equals(idCread)).findFirst().orElse(null);
+        CreadDTO creadDTO = (cread != null) ? contextoMapper.mapearCread(cread) : null;
+        ProgramaDTO programaDTO = contextoMapper.mapearProgramaConCread(programa, creadDTO);
+        SemestreDTO semestreDTO = contextoMapper.mapearSemestreConPrograma(semestre, programaDTO);
+
+
+        return contextoMapper.mapearAsignaturaConSemestre(asignatura, semestreDTO);
     }
 
-    // ============ CONTEXTO COMPLETO (Para cuando el usuario selecciona una actividad) ============
-    public ContextoCompletoDTO obtenerContextoCompleto(Integer idActividad) {
-        ActividadEntity actividad = actividadRepository.findById(idActividad)
-                .orElseThrow(() -> new RuntimeException("Actividad no encontrada con ID: " + idActividad));
 
-        // Reconstruir toda la ruta hacia arriba
-        AsignaturaEntity asignatura = asignaturaRepository.findById(actividad.getCodAsignatura())
-                .orElseThrow(() -> new RuntimeException("Asignatura no encontrada"));
+    public List<ActividadDTO> listarActividadesPorCreadProgramaSemestreAsignatura(
+        Integer idCread, Integer idPrograma, Integer idSemestre, Integer codAsignatura) {
 
-        SemestreEntity semestre = semestreRepository.findById(asignatura.getIdSemestre())
-                .orElseThrow(() -> new RuntimeException("Semestre no encontrado"));
 
-        ProgramaEntity programa = programaRepository.findById(semestre.getIdPrograma())
-                .orElseThrow(() -> new RuntimeException("Programa no encontrado"));
+        ProgramaEntity programa = programaRepository.findById(idPrograma)
+            .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + idPrograma));
+        boolean perteneceAlCread = programa.getCreads().stream()
+            .anyMatch(c -> c.getIdCread().equals(idCread));
+        if (!perteneceAlCread) {
+            throw new RuntimeException("El programa no pertenece al CREAD especificado");
+        }
 
-        CreadEntity cread = creadRepository.findById(programa.getIdCread())
-                .orElseThrow(() -> new RuntimeException("CREAD no encontrado"));
 
-        // Mapear toda la jerarquía
-        CreadDTO creadDTO = mapearCread(cread);
-        ProgramaDTO programaDTO = mapearProgramaConCread(programa, cread.getIdCread());
-        SemestreDTO semestreDTO = mapearSemestreConPrograma(semestre, programa.getIdPrograma());
-        AsignaturaDTO asignaturaDTO = mapearAsignaturaConSemestre(asignatura, semestre.getIdSemestre());
-        ActividadDTO actividadDTO = mapearActividadConAsignatura(actividad, asignatura.getCodAsignatura());
+        SemestreEntity semestre = semestreRepository.findById(idSemestre)
+            .orElseThrow(() -> new RuntimeException("Semestre no encontrado con ID: " + idSemestre));
+        if (!semestre.getIdPrograma().equals(idPrograma)) {
+            throw new RuntimeException("El semestre no pertenece al programa especificado");
+        }
 
-        // Construir ruta legible
-        String rutaCompleta = String.format("%s → %s → %s → %s → %s",
-                cread.getNombre(),
-                programa.getNombre(),
-                semestre.getDescripcion(),
-                asignatura.getNombre(),
-                actividad.getNombre()
+
+        AsignaturaEntity asignatura = asignaturaRepository.findById(codAsignatura)
+            .orElseThrow(() -> new RuntimeException("Asignatura no encontrada con ID: " + codAsignatura));
+        if (!asignatura.getIdSemestre().equals(idSemestre)) {
+            throw new RuntimeException("La asignatura no pertenece al semestre especificado");
+        }
+
+
+        SemestreDTO semestreDTO = contextoMapper.mapearSemestreConPrograma(semestre,
+            contextoMapper.mapearProgramaConCread(programa,
+                contextoMapper.mapearCread(
+                    programa.getCreads().stream().filter(c -> c.getIdCread().equals(idCread)).findFirst().orElse(null)
+                )
+            )
         );
+        AsignaturaDTO asignaturaDTO = contextoMapper.mapearAsignaturaConSemestre(asignatura, semestreDTO);
 
-        return ContextoCompletoDTO.builder()
-                .cread(creadDTO)
-                .programa(programaDTO)
-                .semestre(semestreDTO)
-                .asignatura(asignaturaDTO)
-                .actividad(actividadDTO)
-                .rutaCompleta(rutaCompleta)
-                .build();
+
+        return actividadRepository.findByCodAsignatura(codAsignatura).stream()
+            .map(a -> contextoMapper.mapearActividadConAsignatura(a, asignaturaDTO))
+            .collect(Collectors.toList());
     }
 
-    // ============ MÉTODOS AUXILIARES DE MAPEO ============
 
-    private CreadDTO mapearCread(CreadEntity cread) {
-        return CreadDTO.builder()
-                .idCread(cread.getIdCread())
-                .nombre(cread.getNombre())
-                .direccion(cread.getDireccion())
-                .build();
+    public List<ActividadDTO> listarActividadesPorCreadProgramaSemestre(Integer idCread, Integer idPrograma, Integer idSemestre) {
+        List<AsignaturaDTO> asignaturas = listarAsignaturasPorCreadProgramaSemestre(idCread, idPrograma, idSemestre);
+        return asignaturas.stream()
+            .flatMap(a -> actividadRepository.findByCodAsignatura(a.getCodAsignatura()).stream()
+                .map(act -> contextoMapper.mapearActividadConAsignatura(act, a)))
+            .collect(Collectors.toList());
     }
 
-    private ProgramaDTO mapearProgramaConCread(ProgramaEntity programa, Integer idCread) {
-        CreadDTO creadDTO = creadRepository.findById(idCread)
-                .map(this::mapearCread)
-                .orElse(null);
 
-        return ProgramaDTO.builder()
-                .idPrograma(programa.getIdPrograma())
-                .nombre(programa.getNombre())
-                .descripcion(programa.getDescripcion())
-                .cread(creadDTO)
-                .build();
+    public ActividadDTO obtenerActividadJerarquica(Integer idCread, Integer idPrograma, Integer idSemestre, Integer codAsignatura, Integer idActividad) {
+        ProgramaEntity programa = programaRepository.findById(idPrograma)
+            .orElseThrow(() -> new RuntimeException("Programa no encontrado con ID: " + idPrograma));
+        boolean perteneceAlCread = programa.getCreads().stream()
+            .anyMatch(c -> c.getIdCread().equals(idCread));
+        if (!perteneceAlCread) {
+            throw new RuntimeException("El programa no pertenece al CREAD especificado");
+        }
+
+        SemestreEntity semestre = semestreRepository.findById(idSemestre)
+            .orElseThrow(() -> new RuntimeException("Semestre no encontrado con ID: " + idSemestre));
+        if (!semestre.getIdPrograma().equals(idPrograma)) {
+            throw new RuntimeException("El semestre no pertenece al programa especificado");
+        }
+
+        AsignaturaEntity asignatura = asignaturaRepository.findById(codAsignatura)
+            .orElseThrow(() -> new RuntimeException("Asignatura no encontrada con ID: " + codAsignatura));
+        if (!asignatura.getIdSemestre().equals(idSemestre)) {
+            throw new RuntimeException("La asignatura no pertenece al semestre especificado");
+        }
+
+        ActividadEntity actividad = actividadRepository.findById(idActividad)
+            .orElseThrow(() -> new RuntimeException("Actividad no encontrada con ID: " + idActividad));
+        if (!actividad.getCodAsignatura().equals(codAsignatura)) {
+            throw new RuntimeException("La actividad no pertenece a la asignatura especificada");
+        }
+
+        SemestreDTO semestreDTO = contextoMapper.mapearSemestreConPrograma(semestre,
+            contextoMapper.mapearProgramaConCread(programa,
+                contextoMapper.mapearCread(
+                    programa.getCreads().stream().filter(c -> c.getIdCread().equals(idCread)).findFirst().orElse(null)
+                )
+            )
+        );
+        AsignaturaDTO asignaturaDTO = contextoMapper.mapearAsignaturaConSemestre(asignatura, semestreDTO);
+
+        return contextoMapper.mapearActividadConAsignatura(actividad, asignaturaDTO);
     }
 
-    private SemestreDTO mapearSemestreConPrograma(SemestreEntity semestre, Integer idPrograma) {
-        ProgramaDTO programaDTO = programaRepository.findById(idPrograma)
-                .map(p -> mapearProgramaConCread(p, p.getIdCread()))
-                .orElse(null);
-
-        return SemestreDTO.builder()
-                .idSemestre(semestre.getIdSemestre())
-                .descripcion(semestre.getDescripcion())
-                .programa(programaDTO)
-                .build();
-    }
-
-    private AsignaturaDTO mapearAsignaturaConSemestre(AsignaturaEntity asignatura, Integer idSemestre) {
-        SemestreDTO semestreDTO = semestreRepository.findById(idSemestre)
-                .map(s -> mapearSemestreConPrograma(s, s.getIdPrograma()))
-                .orElse(null);
-
-        return AsignaturaDTO.builder()
-                .codAsignatura(asignatura.getCodAsignatura())
-                .nombre(asignatura.getNombre())
-                .creditos(asignatura.getCreditos())
-                .semestre(semestreDTO)
-                .build();
-    }
-
-    private ActividadDTO mapearActividadConAsignatura(ActividadEntity actividad, Integer codAsignatura) {
-        AsignaturaDTO asignaturaDTO = asignaturaRepository.findById(codAsignatura)
-                .map(a -> mapearAsignaturaConSemestre(a, a.getIdSemestre()))
-                .orElse(null);
-
-        return ActividadDTO.builder()
-                .idActividad(actividad.getIdActividad())
-                .nombre(actividad.getNombre())
-                .asignatura(asignaturaDTO)
-                .build();
-    }
 }

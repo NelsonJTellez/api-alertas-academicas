@@ -11,62 +11,91 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/contexto")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 public class ContextoController {
 
     private final ConsultaContextoService contextoService;
 
-    // ============ FLUJO EN CASCADA DEL FORMULARIO ============
-
-    // Paso 1: Listar CREADs
     @GetMapping("/creads")
     public ResponseEntity<List<CreadDTO>> listarCreads() {
         return ResponseEntity.ok(contextoService.listarCreads());
     }
 
-    // GET /api/contexto/creads/1
-    @GetMapping("/creads/{id}")
-    public ResponseEntity<CreadDTO> obtenerCread(@PathVariable Integer id) {
-        return ResponseEntity.ok(contextoService.obtenerCreadPorId(id));
+    @GetMapping("/creads/{idCread}")
+    public ResponseEntity<CreadDTO> obtenerCread(@PathVariable Integer idCread) {
+        return ResponseEntity.ok(contextoService.obtenerCreadPorId(idCread));
     }
 
-
-    // Paso 2: Listar Programas (con CREAD incluido)
-    @GetMapping("/programas")
-    public ResponseEntity<List<ProgramaDTO>> listarProgramas() {
-        return ResponseEntity.ok(contextoService.listarProgramas());
+    @GetMapping("/creads/{idCread}/programas")
+    public ResponseEntity<List<ProgramaDTO>> listarProgramasPorCread(@PathVariable Integer idCread) {
+        return ResponseEntity.ok(contextoService.listarProgramasPorCread(idCread));
     }
 
-    @GetMapping("/programas/{id}")
-    public ResponseEntity<ProgramaDTO> obtenerPrograma(@PathVariable Integer id) {
-        return ResponseEntity.ok(contextoService.obtenerProgramaPorId(id));
+    @GetMapping("/programas/{idPrograma}")
+    public ResponseEntity<ProgramaDTO> obtenerPrograma(@PathVariable Integer idPrograma) {
+        return ResponseEntity.ok(contextoService.obtenerProgramaPorId(idPrograma));
     }
 
-    // Paso 3: Listar Semestres (con Programa y CREAD incluidos)
-    @GetMapping("/semestres/programa/{idPrograma}")
-    public ResponseEntity<List<SemestreDTO>> listarSemestresPorPrograma(@PathVariable Integer idPrograma) {
-        return ResponseEntity.ok(contextoService.listarSemestresPorPrograma(idPrograma));
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres")
+    public ResponseEntity<List<SemestreDTO>> listarSemestresPorCreadPrograma(
+        @PathVariable Integer idCread,
+        @PathVariable Integer idPrograma) {
+        return ResponseEntity.ok(contextoService.listarSemestresPorCreadPrograma(idCread, idPrograma));
     }
 
-    // Paso 4: Listar Asignaturas (con toda la ruta hasta CREAD)
-    @GetMapping("/asignaturas/semestre/{idSemestre}")
-    public ResponseEntity<List<AsignaturaDTO>> listarAsignaturasPorSemestre(@PathVariable Integer idSemestre) {
-        return ResponseEntity.ok(contextoService.listarAsignaturasPorSemestre(idSemestre));
+    // NUEVO: Obtener un semestre específico bajo la jerarquía
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres/{idSemestre}")
+    public ResponseEntity<SemestreDTO> obtenerSemestreJerarquico(
+        @PathVariable Integer idCread,
+        @PathVariable Integer idPrograma,
+        @PathVariable Integer idSemestre) {
+        return ResponseEntity.ok(contextoService.obtenerSemestreJerarquico(idCread, idPrograma, idSemestre));
     }
 
-    // Paso 5: Listar Actividades (con toda la jerarquía completa)
-    @GetMapping("/actividades/asignatura/{codAsignatura}")
-    public ResponseEntity<List<ActividadDTO>> listarActividadesPorAsignatura(@PathVariable Integer codAsignatura) {
-        return ResponseEntity.ok(contextoService.listarActividadesPorAsignatura(codAsignatura));
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres/{idSemestre}/asignaturas")
+    public ResponseEntity<List<AsignaturaDTO>> listarAsignaturasPorCreadProgramaSemestre(
+        @PathVariable Integer idCread,
+        @PathVariable Integer idPrograma,
+        @PathVariable Integer idSemestre) {
+        return ResponseEntity.ok(contextoService.listarAsignaturasPorCreadProgramaSemestre(idCread, idPrograma, idSemestre));
     }
 
-    // ============ ENDPOINT ESPECIAL: CONTEXTO COMPLETO ============
-
-    // Obtener el contexto completo de una actividad seleccionada
-    // Útil para validar antes de enviar el formulario
-    @GetMapping("/completo/actividad/{idActividad}")
-    public ResponseEntity<ContextoCompletoDTO> obtenerContextoCompleto(@PathVariable Integer idActividad) {
-        return ResponseEntity.ok(contextoService.obtenerContextoCompleto(idActividad));
+    // NUEVO: Obtener una asignatura específica bajo la jerarquía
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres/{idSemestre}/asignaturas/{codAsignatura}")
+    public ResponseEntity<AsignaturaDTO> obtenerAsignaturaJerarquica(
+        @PathVariable Integer idCread,
+        @PathVariable Integer idPrograma,
+        @PathVariable Integer idSemestre,
+        @PathVariable Integer codAsignatura) {
+        return ResponseEntity.ok(contextoService.obtenerAsignaturaJerarquica(idCread, idPrograma, idSemestre, codAsignatura));
     }
+
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres/{idSemestre}/asignaturas/actividades")
+    public ResponseEntity<List<ActividadDTO>> listarActividadesPorCreadProgramaSemestre(
+        @PathVariable Integer idCread,
+        @PathVariable Integer idPrograma,
+        @PathVariable Integer idSemestre) {
+        return ResponseEntity.ok(contextoService.listarActividadesPorCreadProgramaSemestre(idCread, idPrograma, idSemestre));
+    }
+
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres/{idSemestre}/asignaturas/{codAsignatura}/actividades")
+    public ResponseEntity<List<ActividadDTO>> listarActividadesPorCreadProgramaSemestreAsignatura(
+        @PathVariable Integer idCread,
+        @PathVariable Integer idPrograma,
+        @PathVariable Integer idSemestre,
+        @PathVariable Integer codAsignatura) {
+        return ResponseEntity.ok(contextoService.listarActividadesPorCreadProgramaSemestreAsignatura(idCread, idPrograma, idSemestre, codAsignatura));
+    }
+
+    @GetMapping("/creads/{idCread}/programas/{idPrograma}/semestres/{idSemestre}/asignaturas/{codAsignatura}/actividades/{idActividad}")
+public ResponseEntity<ActividadDTO> obtenerActividadJerarquica(
+    @PathVariable Integer idCread,
+    @PathVariable Integer idPrograma,
+    @PathVariable Integer idSemestre,
+    @PathVariable Integer codAsignatura,
+    @PathVariable Integer idActividad) {
+    return ResponseEntity.ok(contextoService.obtenerActividadJerarquica(idCread, idPrograma, idSemestre, codAsignatura, idActividad));
+}
+
 
 }

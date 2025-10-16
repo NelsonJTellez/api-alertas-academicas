@@ -12,7 +12,7 @@ import lombok.*;
 public class AsignaturaEntity {
 
     @Id
-    @Column(name = "cod_asignatura", nullable = false)  // ← Con guion bajo
+    @Column(name = "cod_asignatura", nullable = false) 
     private Integer codAsignatura;
 
     @Column(name = "nombre", nullable = false, length = 255)
@@ -21,9 +21,7 @@ public class AsignaturaEntity {
     @Column(name = "creditos", nullable = false)
     private Integer creditos;
 
-    @Column(name = "id_semestre", nullable = false)  // ← Con guion bajo
+    @Column(name = "id_semestre", nullable = false)  
     private Integer idSemestre;
 
-    @Column(name = "programa", nullable = false, length = 255)
-    private String programa;
 }
