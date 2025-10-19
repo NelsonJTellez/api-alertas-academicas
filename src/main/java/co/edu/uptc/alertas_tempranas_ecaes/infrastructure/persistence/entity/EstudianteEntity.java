@@ -12,15 +12,21 @@ import lombok.*;
 public class EstudianteEntity {
 
     @Id
-    @Column(nullable = false)
-    private Integer codigo; // PK en la tabla estudiante
+    @Column(name = "codigo", nullable = false)
+    private Integer codigo;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "nombre", nullable = false, length = 50)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(name = "apellido", nullable = false, length = 50)
+    private String apellido;
+
+    @Column(name = "correo", nullable = false, length = 255)
     private String correo;
 
-    @Column(nullable = false)
+    @Column(name = "celular", nullable = false)
     private Long celular;
+
+    @Column(name = "id_inscripcion")
+    private Integer idInscripcion;
 }

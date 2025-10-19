@@ -6,13 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Estudiante {
-
     private Integer codigo;
     private String nombre;
+    private String apellido;
     private String correo;
     private Long celular;
+    private Integer idInscripcion;
 }

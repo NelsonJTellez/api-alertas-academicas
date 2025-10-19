@@ -1,15 +1,17 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto;
 
 
+import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto.base.BaseDTO;
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EstudianteDTO {
-    private Integer codigo;
+public class EstudianteDTO implements BaseDTO<Integer> {
+    private Integer id;
     private String nombre;
-    private String correo;
-    private Long celular;
+    private String apellido;
+    private Integer codigo;
 }

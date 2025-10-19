@@ -1,59 +1,52 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.mapper;
 
 import co.edu.uptc.alertas_tempranas_ecaes.domain.model.AlertaTemprana;
-import co.edu.uptc.alertas_tempranas_ecaes.domain.model.Docente;
-import co.edu.uptc.alertas_tempranas_ecaes.domain.model.Estudiante;
 import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.AlertaTempranaEntity;
-import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.DocenteEntity;
-import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.EstudianteEntity;
 import org.springframework.stereotype.Component;
 
-@Component
-public class AlertaTempranaMapper {
+import java.util.List;
+import java.util.stream.Collectors;
 
+@Component
+public class AlertaTempranaMapper implements GenericMapper<AlertaTempranaEntity, AlertaTemprana, Integer> {
+
+    @Override
     public AlertaTemprana toDomain(AlertaTempranaEntity entity) {
         if (entity == null) return null;
 
         return AlertaTemprana.builder()
                 .id(entity.getId())
                 .descripcion(entity.getDescripcion())
-                .fechaRegistro(entity.getFechaRegistro())
-                .idActividadReportada(entity.getIdActividadReportada())
-                .idSeguimiento(entity.getIdSeguimiento())
-                .docente(new Docente(
-                        entity.getDocente().getCedula(),
-                        entity.getDocente().getNombre(),
-                        entity.getDocente().getCorreo()
-                ))
-                .estudiante(new Estudiante(
-                        entity.getEstudiante().getCodigo(),
-                        entity.getEstudiante().getNombre(),
-                        entity.getEstudiante().getCorreo(),
-                        entity.getEstudiante().getCelular()
-                ))
+                .idEstudiante(entity.getIdEstudiante())
+                .idDocente(entity.getIdDocente())
                 .build();
     }
 
+    @Override
     public AlertaTempranaEntity toEntity(AlertaTemprana domain) {
         if (domain == null) return null;
 
         return AlertaTempranaEntity.builder()
                 .id(domain.getId())
                 .descripcion(domain.getDescripcion())
-                .fechaRegistro(domain.getFechaRegistro())
-                .idActividadReportada(domain.getIdActividadReportada())
-                .idSeguimiento(domain.getIdSeguimiento())
-                .docente(DocenteEntity.builder()
-                        .cedula(domain.getDocente().getCedula())
-                        .nombre(domain.getDocente().getNombre())
-                        .correo(domain.getDocente().getCorreo())
-                        .build())
-                .estudiante(EstudianteEntity.builder()
-                        .codigo(domain.getEstudiante().getCodigo())
-                        .nombre(domain.getEstudiante().getNombre())
-                        .correo(domain.getEstudiante().getCorreo())
-                        .celular(domain.getEstudiante().getCelular())
-                        .build())
+                .idEstudiante(domain.getIdEstudiante())
+                .idDocente(domain.getIdDocente())
                 .build();
+    }
+
+    @Override
+    public List<AlertaTemprana> toDomainList(List<AlertaTempranaEntity> entities) {
+        if (entities == null) return null;
+        return entities.stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AlertaTempranaEntity> toEntityList(List<AlertaTemprana> domainList) {
+        if (domainList == null) return null;
+        return domainList.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 }

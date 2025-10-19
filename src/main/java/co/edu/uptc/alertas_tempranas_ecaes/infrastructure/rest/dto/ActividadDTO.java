@@ -1,15 +1,16 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto;
 
+
+import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto.base.BaseDTO;
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ActividadDTO {
-    private Integer idActividad;
+public class ActividadDTO implements BaseDTO<Integer> {
+    private Integer id;
     private String nombre;
-
-    // Ruta completa: Asignatura → Semestre → Programa → CREAD
-    private AsignaturaDTO asignatura;
+    private Integer idAsignatura; // Referencia jerárquica
 }

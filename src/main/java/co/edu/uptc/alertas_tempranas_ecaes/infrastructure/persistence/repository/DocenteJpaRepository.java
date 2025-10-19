@@ -4,11 +4,12 @@ import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.Doc
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 public interface DocenteJpaRepository extends JpaRepository<DocenteEntity, Long> {
-
-    // Buscar docente por cédula
-    Optional<DocenteEntity> findByCedula(Long cedula);
+    // Métodos heredados:
+    // - Optional<DocenteEntity> findById(Long cedula)
+    // - List<DocenteEntity> findAll()
+    // - DocenteEntity save(DocenteEntity entity)
+    // - void deleteById(Long cedula)
+    // - boolean existsById(Long cedula)
 }

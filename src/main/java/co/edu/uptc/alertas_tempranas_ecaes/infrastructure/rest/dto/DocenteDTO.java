@@ -1,14 +1,18 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto;
 
 
+import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.rest.dto.base.BaseDTO;
 import lombok.*;
 
-@Data
+
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DocenteDTO {
-    private Long cedula;
+public class DocenteDTO implements BaseDTO<Long> {
+    private Long id;
     private String nombre;
-    private String correo;
+    private String apellido;
+    private Long cedula;
 }

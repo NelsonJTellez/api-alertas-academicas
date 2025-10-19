@@ -1,23 +1,25 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity;
 
+import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
 @Entity
 @Table(name = "cread")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreadEntity {
+public class CreadEntity extends BaseEntity<Integer> {
 
     @Id
-    @Column(name = "id_cread", nullable = false)  // ← Con guion bajo
-    private Integer idCread;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_cread")  // ✅ Coincide con la BD
+    private Integer id;
 
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
-    @Column(name = "direccion", length = 100)
-    private String direccion;
+    @Column(name = "direccion", length = 200)
+    private String direccion;  // ← Asegúrate de tener este campo
 }

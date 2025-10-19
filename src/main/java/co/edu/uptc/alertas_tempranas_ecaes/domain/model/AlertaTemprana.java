@@ -1,27 +1,20 @@
 package co.edu.uptc.alertas_tempranas_ecaes.domain.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import co.edu.uptc.alertas_tempranas_ecaes.domain.model.base.BaseModel;
+import lombok.*;
 
-import java.time.LocalDate;
-
-@Data
+/**
+ * Modelo de dominio para Alerta Temprana.
+ * Representa una alerta generada para un estudiante por parte de un docente.
+ */
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AlertaTemprana {
-
+public class AlertaTemprana implements BaseModel<Integer> {
     private Integer id;
     private String descripcion;
-    private LocalDate fechaRegistro;
-
-    // Relaciones principales
-    private Docente docente;
-    private Estudiante estudiante;
-
-    // Referencias auxiliares (foráneas a otras tablas)
-    private Integer idActividadReportada;
-    private Integer idSeguimiento;
+    private Integer idEstudiante;
+    private Long idDocente;
 }

@@ -1,14 +1,17 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.repository;
 
-
 import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.CreadEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
+/**
+ * Repositorio JPA para la entidad CREAD.
+ * Hereda todas las operaciones CRUD básicas de GenericJpaRepository.
+ */
 @Repository
-public interface CreadJpaRepository extends JpaRepository<CreadEntity, Integer> {
+public interface CreadJpaRepository extends GenericJpaRepository<CreadEntity, Integer> {
 
-    List<CreadEntity> findAll();
+    // Los métodos heredados de GenericJpaRepository son suficientes para CREAD
+    // Si necesitas métodos personalizados, agrégalos aquí
+    // Por ejemplo:
+    // List<CreadEntity> findByNombreContaining(String nombre);
 }

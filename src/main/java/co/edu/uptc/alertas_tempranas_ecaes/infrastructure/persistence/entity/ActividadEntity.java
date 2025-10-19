@@ -1,23 +1,26 @@
 package co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity;
 
+import co.edu.uptc.alertas_tempranas_ecaes.infrastructure.persistence.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "actividad")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ActividadEntity {
+public class ActividadEntity extends BaseEntity<Integer> {
 
     @Id
-    @Column(name = "id_actividad", nullable = false)  // ← Con guion bajo
-    private Integer idActividad;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_actividad")
+    private Integer id;
 
     @Column(name = "nombre", length = 100)
     private String nombre;
 
-    @Column(name = "cod_asignatura")  // ← Con guion bajo
+    @Column(name = "cod_asignatura")
     private Integer codAsignatura;
 }

@@ -6,12 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Docente {
-
     private Long cedula;
     private String nombre;
+    private String apellido;
     private String correo;
 }
